@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="tl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bagong Balita Biblia Viewer</title>
+  <style>
+    :root {
+      --bg: #f7f7f9; --card: #ffffff; --accent: #2b6cb0;
+      --muted: #6b7280;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    body { margin: 0; background: var(--bg); color: #111827; display: flex; height: 100vh; flex-direction: column; }
+    header {
+      position: fixed; top: 0; left: 0; right: 0; background: white;
+      border-bottom: 1px solid #e5e7eb; padding: 10px 15px; z-index: 10;
+      display: flex; align-items: center; gap: 12px;
+    }
+    header h1 { font-size: 18px; margin: 0; }
+    .nav-toggle {
+      background: none; border: none; cursor: pointer; font-size: 16px; padding: 8px;
+      color: var(--accent); display: flex; align-items: center;
+    }
+    .nav-toggle:hover { background: #e5e7eb; }
+    .layout { flex: 1; margin-top: 55px; position: relative; }
+    .sidebar { 
+      position: fixed; left: -192px; top: 55px; width: 192px; height: calc(100vh - 55px - 24px); 
+      border-right: 1px solid #e5e7eb; overflow-y: auto; background: #fff; z-index: 5;
+      transition: left 0.3s ease; padding-top: 10px;
+    }
+    .sidebar.visible { left: 0; }
+    .chapters { 
+      position: fixed; left: -40px; top: 55px; width: 40px; height: calc(100vh - 55px - 24px); 
+      border-right: 1px solid #e5e7eb; overflow-y: auto; background: #fafafa; z-index: 5;
+      transition: left 0.3s ease;
+    }
+    .chapters.visible { left: 192px; }
+    .reader { 
+      flex: 1; padding: 20px; overflow-y: auto; height: calc(100vh - 55px - 24px); 
+      transition: margin-left 0.3s ease;
+    }
+    .reader.nav-visible { margin-left: 232px; }
+    .book-btn, .chapter-btn {
+      display: block; width: 100%; text-align: left;
+      border: none; background: none; cursor: pointer;
+      padding: 8px 12px; font-size: 14px;
+    }
+    .book-btn:hover, .chapter-btn:hover { background: #e5e7eb; }
+    .book-btn.active, .chapter-btn.active {
+      background: var(--accent); color: white; font-weight: bold;
+    }
+    .verse { margin-bottom: 6px; font-size: 30px; }
+    .verse .num { font-weight: bold; color: var(--muted); margin-right: 6px; }
+    footer { padding: 6px 10px; font-size: 12px; color: var(--muted); border-top: 1px solid #e5e7eb; text-align: center; }
+    .search-container {
+      padding: 8px 12px;
+    }
+    input[type="search"] {
+      width: 100%; padding: 8px 10px; border-radius: 8px;
+      border: 1px solid #d1d5db; font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <button class="nav-toggle" id="navToggle">☰</button>
+    <h1>Bagong Balita Biblia Viewer</h1>
+    <label style="font-size:12px;margin-left:12px;">
+      I-load ang JSON: <input id="fileInput" type="file" accept=".json" />
+    </label>
+  </header>
+
+  <div class="layout">
+    <div class="sidebar" id="bookList">
+      <div class="search-container">
+        <input id="q" type="search" placeholder="Hanapin ang aklat... (pwede rin English)" />
+      </div>
+    </div>
+    <div class="chapters" id="chapterList"></div>
+    <div class="reader">
+      <h2 id="readerTitle">Naglo-load ng Bible JSON...</h2>
+      <div id="versesArea"></div>
+    </div>
+  </div>
+
+  <footer>
+    Local Bible Viewer – Gumagana sa <code>rtpv.json</code> na in-export mula sa iyong .bblx
+  </footer>
+
+  <script>
+    let bible = {};
+    let currentBook = null;
+    let currentChapter = null;
+    let isNavVisible = false;
+
+    const bookList = document.getElementById('bookList');
+    const chapterList = document.getElementById('chapterList');
+    const versesArea = document.getElementById('versesArea');
+    const readerTitle = document.getElementById('readerTitle');
+    const q = document.getElementById('q');
+    const navToggle = document.getElementById('navToggle');
+    const reader = document.querySelector('.reader');
+
+    // English ↔ Tagalog mapping
+    const bookMap = {
+      "Genesis":"Genesis","Exodus":"Exodo","Leviticus":"Levitico","Numbers":"Mga Bilang","Deuteronomy":"Deuteronomio",
+      "Joshua":"Josue","Judges":"Mga Hukom","Ruth":"Ruth","1 Samuel":"1 Samuel","2 Samuel":"2 Samuel",
+      "1 Kings":"1 Mga Hari","2 Kings":"2 Mga Hari","1 Chronicles":"1 Cronica","2 Chronicles":"2 Cronica","Ezra":"Ezra",
+      "Nehemiah":"Nehemias","Esther":"Esther","Job":"Job","Psalms":"Mga Awit","Proverbs":"Mga Kawikaan",
+      "Ecclesiastes":"Ecclesiastes","Song of Solomon":"Awit ng mga Awit","Isaiah":"Isaias","Jeremiah":"Jeremias","Lamentations":"Panaghoy",
+      "Ezekiel":"Ezekiel","Daniel":"Daniel","Hosea":"Hosea","Joel":"Joel","Amos":"Amos",
+      "Obadiah":"Obadias","Jonah":"Jonas","Micah":"Mikas","Nahum":"Nahum","Habakkuk":"Habakuk",
+      "Zephaniah":"Zefanias","Haggai":"Hagay","Zechariah":"Zacarias","Malachi":"Malakias",
+      "Matthew":"Mateo","Mark":"Marcos","Luke":"Lucas","John":"Juan","Acts":"Mga Gawa",
+      "Romans":"Roma","1 Corinthians":"1 Corinto","2 Corinthians":"2 Corinto","Galatians":"Galacia","Ephesians":"Efeso",
+      "Philippians":"Filipos","Colossians":"Colosas","1 Thessalonians":"1 Tesalonica","2 Thessalonians":"2 Tesalonica","1 Timothy":"1 Timoteo",
+      "2 Timothy":"2 Timoteo","Titus":"Tito","Philemon":"Filemon","Hebrews":"Hebreo","James":"Santiago",
+      "1 Peter":"1 Pedro","2 Peter":"2 Pedro","1 John":"1 Juan","2 John":"2 Juan","3 John":"3 Juan",
+      "Jude":"Judas","Revelation":"Pahayag"
+    };
+
+    // reverse mapping (Tagalog → English)
+    const reverseBookMap = Object.fromEntries(Object.entries(bookMap).map(([en,tl])=>[tl,en]));
+
+    function renderBooks(filterTerm = '') {
+      const existingSearch = bookList.querySelector('.search-container');
+      bookList.innerHTML = '';
+      if (existingSearch) bookList.appendChild(existingSearch);
+      
+      const term = filterTerm.toLowerCase();
+      Object.keys(bible).forEach(book => {
+        let bookNames = [book.toLowerCase()];
+        if(reverseBookMap[book]) bookNames.push(reverseBookMap[book].toLowerCase());
+        if(bookMap[book]) bookNames.push(bookMap[book].toLowerCase());
+        if (term === '' || bookNames.some(n => n.includes(term))) {
+          const btn = document.createElement('button');
+          btn.textContent = book;
+          btn.className = 'book-btn' + (book===currentBook ? ' active':'');
+          btn.onclick = () => selectBook(book);
+          bookList.appendChild(btn);
+        }
+      });
+    }
+
+    function renderChapters() {
+      chapterList.innerHTML = '';
+      if(!currentBook) return;
+      Object.keys(bible[currentBook]).forEach(ch => {
+        const btn = document.createElement('button');
+        btn.textContent = ch;
+        btn.className = 'chapter-btn' + (ch===currentChapter ? ' active':'');
+        btn.onclick = () => selectChapter(ch);
+        chapterList.appendChild(btn);
+      });
+    }
+
+    function renderVerses() {
+      versesArea.innerHTML = '';
+      if(!currentBook || !currentChapter) return;
+      readerTitle.textContent = `${currentBook} ${currentChapter}`;
+      bible[currentBook][currentChapter].forEach((txt, i) => {
+        const div = document.createElement('div');
+        div.className = 'verse';
+        const numSpan = document.createElement('span');
+        numSpan.className = 'num';
+        numSpan.textContent = `${i+1}`;
+        div.appendChild(numSpan);
+        div.appendChild(document.createTextNode(` ${txt}`));
+        versesArea.appendChild(div);
+      });
+    }
+
+    function selectBook(book) {
+      currentBook = book;
+      currentChapter = Object.keys(bible[book])[0];
+      renderBooks(q.value.trim());
+      renderChapters();
+      renderVerses();
+    }
+
+    function selectChapter(ch) {
+      currentChapter = ch;
+      renderChapters();
+      renderVerses();
+    }
+
+    // Toggle navigation
+    navToggle.addEventListener('click', () => {
+      isNavVisible = !isNavVisible;
+      bookList.classList.toggle('visible', isNavVisible);
+      chapterList.classList.toggle('visible', isNavVisible);
+      reader.classList.toggle('nav-visible', isNavVisible);
+      navToggle.textContent = isNavVisible ? '✕' : '☰';
+    });
+
+    // Search logic (filters book names only)
+    q.addEventListener('input', () => {
+      const term = q.value.trim();
+      renderBooks(term);
+      if (currentBook && !Object.keys(bible).includes(currentBook)) {
+        currentBook = null;
+        currentChapter = null;
+        chapterList.innerHTML = '';
+        versesArea.innerHTML = '';
+        readerTitle.textContent = 'Pumili ng aklat';
+      }
+    });
+
+    // Automatic JSON load
+    function loadDefaultJson() {
+      fetch('rtpv.json')
+        .then(response => {
+          if (!response.ok) throw new Error('Hindi mahanap ang rtpv.json');
+          return response.json();
+        })
+        .then(data => {
+          bible = data;
+          currentBook = Object.keys(bible)[0];
+          currentChapter = Object.keys(bible[currentBook])[0];
+          renderBooks();
+          renderChapters();
+          renderVerses();
+          readerTitle.textContent = `${currentBook} ${currentChapter}`;
+        })
+        .catch(err => {
+          console.error('Error loading rtpv.json:', err.message);
+          readerTitle.textContent = 'Hindi mahanap ang rtpv.json. Mag-upload ng JSON file.';
+          versesArea.innerHTML = '<div>Pakilagay ang rtpv.json sa parehong directory o mag-upload ng file.</div>';
+        });
+    }
+
+    // Load JSON
+    document.getElementById('fileInput').addEventListener('change', (ev) => {
+      const file = ev.target.files[0];
+      if (!file) {
+        alert('Mangyaring pumili ng JSON file.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadstart = () => {
+        versesArea.innerHTML = '<div>Loading...</div>';
+      };
+      reader.onload = (e) => {
+        try {
+          bible = JSON.parse(e.target.result);
+          currentBook = Object.keys(bible)[0];
+          currentChapter = Object.keys(bible[currentBook])[0];
+          renderBooks();
+          renderChapters();
+          renderVerses();
+          alert('Matagumpay na nai-load ang Bible JSON!');
+        } catch (err) {
+          alert('Hindi mabasa ang JSON: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    // Attempt to load default JSON on page load
+    window.addEventListener('load', loadDefaultJson);
+  </script>
+</body>
+</html>
