@@ -10,71 +10,137 @@
       --muted: #6b7280;
       font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
-    body { margin: 0; background: var(--bg); color: #111827; display: flex; height: 100vh; flex-direction: column; }
+    body {
+      margin: 0; background: var(--bg); color: #111827;
+      display: flex; height: 100vh; flex-direction: column;
+    }
     header {
       position: fixed; top: 0; left: 0; right: 0; background: white;
-      border-bottom: 1px solid #e5e7eb; padding: 10px 15px; z-index: 10;
-      display: flex; align-items: center; gap: 12px;
+      border-bottom: 1px solid #e5e7eb; padding: 8px 12px; z-index: 10;
+      display: flex; align-items: center; gap: 8px;
     }
-    header h1 { font-size: 18px; margin: 0; }
+    header h1 { font-size: 16px; margin: 0; flex: 1; }
     .nav-toggle {
-      background: none; border: none; cursor: pointer; font-size: 16px; padding: 8px;
+      background: none; border: none; cursor: pointer; font-size: 18px; padding: 6px;
       color: var(--accent); display: flex; align-items: center;
     }
-    .nav-toggle:hover { background: #e5e7eb; }
-    .layout { flex: 1; margin-top: 55px; position: relative; }
-    .sidebar { 
-      position: fixed; left: -192px; top: 55px; width: 192px; height: calc(100vh - 55px - 24px); 
+    .nav-toggle:hover { background: #e5e7eb; border-radius: 6px; }
+
+    .layout { flex: 1; margin-top: 55px; position: relative; display: flex; }
+
+    /* Sidebar (Books) */
+    .sidebar {
+      position: fixed; left: -192px; top: 55px; width: 188px; height: calc(100vh - 55px - 24px);
       border-right: 1px solid #e5e7eb; overflow-y: auto; background: #fff; z-index: 5;
       transition: left 0.3s ease; padding-top: 10px;
     }
     .sidebar.visible { left: 0; }
-    .chapters { 
-      position: fixed; left: -40px; top: 55px; width: 40px; height: calc(100vh - 55px - 24px); 
+
+    /* Chapters */
+    .chapters {
+      position: fixed; left: -39px; top: 55px; width: 48px; height: calc(100vh - 55px - 24px);
       border-right: 1px solid #e5e7eb; overflow-y: auto; background: #fafafa; z-index: 5;
       transition: left 0.3s ease;
     }
     .chapters.visible { left: 192px; }
-    .reader { 
-      flex: 1; padding: 20px; overflow-y: auto; height: calc(100vh - 55px - 24px); 
+
+    /* Reader */
+    .reader {
+      flex: 1; font-size: 50px; padding: 20px; overflow-y: auto; height: calc(100vh - 55px - 24px);
       transition: margin-left 0.3s ease;
     }
     .reader.nav-visible { margin-left: 232px; }
+
+    /* Buttons */
     .book-btn, .chapter-btn {
       display: block; width: 100%; text-align: left;
       border: none; background: none; cursor: pointer;
-      padding: 8px 12px; font-size: 14px;
+      padding: 8px 12px; font-size: 14px; color: inherit;
     }
     .book-btn:hover, .chapter-btn:hover { background: #e5e7eb; }
     .book-btn.active, .chapter-btn.active {
       background: var(--accent); color: white; font-weight: bold;
     }
-    .verse { margin-bottom: 6px; font-size: 30px; }
+
+    /* Verses (responsive font size) */
+    .verse { margin-bottom: 6px; font-size: 80px; line-height: 1.5; }
     .verse .num { font-weight: bold; color: var(--muted); margin-right: 6px; }
-    footer { padding: 6px 10px; font-size: 12px; color: var(--muted); border-top: 1px solid #e5e7eb; text-align: center; }
-    .search-container {
-      padding: 8px 12px;
+
+    footer {
+      padding: 6px 10px; font-size: 12px; color: var(--muted);
+      border-top: 1px solid #e5e7eb; text-align: center; background: #fff;
     }
-    input[type="search"] {
-      width: 100%; padding: 8px 10px; border-radius: 8px;
-      border: 1px solid #d1d5db; font-size: 14px;
+
+    /* Search bar in header */
+    .search-container {
+      display: flex; align-items: center;
+      max-width: 180px; flex: 0 0 auto;
+    }
+    .search-container input[type="search"] {
+      flex: 1; padding: 6px 8px;
+      border-radius: 8px 0 0 8px;
+      border: 1px solid #d1d5db; font-size: 14px; width: 150px;
+    }
+    .search-container button {
+      border: 1px solid #d1d5db; border-left: none;
+      background: #f1f1f1; cursor: pointer; padding: 6px 10px;
+      border-radius: 0 8px 8px 0;
+    }
+
+    /* Dark mode */
+    body.dark-mode { --bg: #1a202c; --card: #2d3748; color: #f9fafb; }
+    body.dark-mode header,
+    body.dark-mode footer,
+    body.dark-mode .sidebar,
+    body.dark-mode .chapters { background: #2d3748; border-color: #4a5568; }
+    body.dark-mode .book-btn,
+    body.dark-mode .chapter-btn { color: #f9fafb; }
+    body.dark-mode .book-btn:hover,
+    body.dark-mode .chapter-btn:hover { background: #4a5568; }
+    body.dark-mode .book-btn.active,
+    body.dark-mode .chapter-btn.active { background: var(--accent); color: white; }
+    body.dark-mode input[type="search"] { background: #4a5568; color: #fff; border-color: #718096; }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      header h1 { font-size: 15px; }
+      .reader { padding: 12px; font-size: 15px; }
+      .verse { font-size: 60px; }
+      .sidebar { width: 160px; left: -160px; }
+      .chapters.visible { left: 160px; }
+      .reader.nav-visible { margin-left: 200px; }
+      .search-container { max-width: 140px; }
+    }
+
+    @media (max-width: 480px) {
+      header { padding: 6px 8px; }
+      header h1 { font-size: 13px; }
+      .nav-toggle { font-size: 16px; padding: 6px; }
+      .reader { padding: 10px; font-size: 20px; }
+      .verse { font-size: 30px; }
+      .sidebar { width: 140px; left: -140px; top: 55px; }
+      .chapters { width: 40px; left: -40px; top: 55px; }
+      .chapters.visible { left: 140px; }
+      .reader.nav-visible { margin-left: 180px; }
+      .search-container { max-width: 120px; }
+      .search-container input[type="search"] {width: 85px;}
     }
   </style>
 </head>
 <body>
   <header>
     <button class="nav-toggle" id="navToggle">☰</button>
-    <h1>Bagong Balita Biblia Viewer</h1>
-    <label style="font-size:12px;margin-left:12px;">
-      I-load ang JSON: <input id="fileInput" type="file" accept=".json" />
-    </label>
+    <h1>Bagong Balita Biblia</h1>
+    <div class="search-container">
+      <input id="searchInput" type="search" placeholder="Search" />
+      <button id="searchBtn">🔍</button>
+    </div>
+    <button id="darkToggle" style="background:none; border:none; cursor:pointer; font-size:16px;">🌙</button>
   </header>
 
   <div class="layout">
     <div class="sidebar" id="bookList">
-      <div class="search-container">
-        <input id="q" type="search" placeholder="Hanapin ang aklat... (pwede rin English)" />
-      </div>
+      <div id="bookButtons"></div>
     </div>
     <div class="chapters" id="chapterList"></div>
     <div class="reader">
@@ -83,9 +149,6 @@
     </div>
   </div>
 
-  <footer>
-    Local Bible Viewer – Gumagana sa <code>rtpv.json</code> na in-export mula sa iyong .bblx
-  </footer>
 
   <script>
     let bible = {};
@@ -94,12 +157,14 @@
     let isNavVisible = false;
 
     const bookList = document.getElementById('bookList');
+    const bookButtons = document.getElementById('bookButtons');
     const chapterList = document.getElementById('chapterList');
     const versesArea = document.getElementById('versesArea');
     const readerTitle = document.getElementById('readerTitle');
-    const q = document.getElementById('q');
+    const searchInput = document.getElementById('searchInput');
     const navToggle = document.getElementById('navToggle');
     const reader = document.querySelector('.reader');
+    const darkToggle = document.getElementById('darkToggle');
 
     // English ↔ Tagalog mapping
     const bookMap = {
@@ -118,52 +183,55 @@
       "1 Peter":"1 Pedro","2 Peter":"2 Pedro","1 John":"1 Juan","2 John":"2 Juan","3 John":"3 Juan",
       "Jude":"Judas","Revelation":"Pahayag"
     };
-
-    // reverse mapping (Tagalog → English)
     const reverseBookMap = Object.fromEntries(Object.entries(bookMap).map(([en,tl])=>[tl,en]));
 
     function renderBooks(filterTerm = '') {
-      const existingSearch = bookList.querySelector('.search-container');
-      bookList.innerHTML = '';
-      if (existingSearch) bookList.appendChild(existingSearch);
-      
+      bookButtons.innerHTML = '';
       const term = filterTerm.toLowerCase();
       Object.keys(bible).forEach(book => {
         let bookNames = [book.toLowerCase()];
-        if(reverseBookMap[book]) bookNames.push(reverseBookMap[book].toLowerCase());
-        if(bookMap[book]) bookNames.push(bookMap[book].toLowerCase());
+        if (reverseBookMap[book]) bookNames.push(reverseBookMap[book].toLowerCase());
+        if (bookMap[book]) bookNames.push(bookMap[book].toLowerCase());
         if (term === '' || bookNames.some(n => n.includes(term))) {
           const btn = document.createElement('button');
           btn.textContent = book;
-          btn.className = 'book-btn' + (book===currentBook ? ' active':'');
+          btn.className = 'book-btn' + (book === currentBook ? ' active' : '');
           btn.onclick = () => selectBook(book);
-          bookList.appendChild(btn);
+          bookButtons.appendChild(btn);
         }
       });
     }
 
     function renderChapters() {
       chapterList.innerHTML = '';
-      if(!currentBook) return;
+      if (!currentBook) return;
       Object.keys(bible[currentBook]).forEach(ch => {
         const btn = document.createElement('button');
         btn.textContent = ch;
-        btn.className = 'chapter-btn' + (ch===currentChapter ? ' active':'');
-        btn.onclick = () => selectChapter(ch);
+        btn.className = 'chapter-btn' + (ch === currentChapter ? ' active' : '');
+        btn.onclick = () => {
+          selectChapter(ch);
+          // ✅ auto-hide sidebar after selecting a chapter
+          bookList.classList.remove('visible');
+          chapterList.classList.remove('visible');
+          reader.classList.remove('nav-visible');
+          navToggle.textContent = '☰';
+          isNavVisible = false;
+        };
         chapterList.appendChild(btn);
       });
     }
 
     function renderVerses() {
       versesArea.innerHTML = '';
-      if(!currentBook || !currentChapter) return;
+      if (!currentBook || !currentChapter) return;
       readerTitle.textContent = `${currentBook} ${currentChapter}`;
       bible[currentBook][currentChapter].forEach((txt, i) => {
         const div = document.createElement('div');
         div.className = 'verse';
         const numSpan = document.createElement('span');
         numSpan.className = 'num';
-        numSpan.textContent = `${i+1}`;
+        numSpan.textContent = `${i + 1}`;
         div.appendChild(numSpan);
         div.appendChild(document.createTextNode(` ${txt}`));
         versesArea.appendChild(div);
@@ -173,7 +241,7 @@
     function selectBook(book) {
       currentBook = book;
       currentChapter = Object.keys(bible[book])[0];
-      renderBooks(q.value.trim());
+      renderBooks(searchInput.value.trim());
       renderChapters();
       renderVerses();
     }
@@ -191,20 +259,23 @@
       chapterList.classList.toggle('visible', isNavVisible);
       reader.classList.toggle('nav-visible', isNavVisible);
       navToggle.textContent = isNavVisible ? '✕' : '☰';
+      if (isNavVisible) searchInput.focus(); // ✅ auto-focus search
     });
 
-    // Search logic (filters book names only)
-    q.addEventListener('input', () => {
-      const term = q.value.trim();
+    // Search logic
+    function doSearch() {
+      const term = searchInput.value.trim();
       renderBooks(term);
-      if (currentBook && !Object.keys(bible).includes(currentBook)) {
-        currentBook = null;
-        currentChapter = null;
-        chapterList.innerHTML = '';
-        versesArea.innerHTML = '';
-        readerTitle.textContent = 'Pumili ng aklat';
+      if (term !== '' && bookButtons.children.length > 0) {
+        isNavVisible = true;
+        bookList.classList.add('visible');
+        chapterList.classList.add('visible');
+        reader.classList.add('nav-visible');
+        navToggle.textContent = '✕';
       }
-    });
+    }
+    searchInput.addEventListener('input', doSearch);
+    document.getElementById('searchBtn').addEventListener('click', doSearch);
 
     // Automatic JSON load
     function loadDefaultJson() {
@@ -222,42 +293,55 @@
           renderVerses();
           readerTitle.textContent = `${currentBook} ${currentChapter}`;
         })
-        .catch(err => {
-          console.error('Error loading rtpv.json:', err.message);
+        .catch(() => {
           readerTitle.textContent = 'Hindi mahanap ang rtpv.json. Mag-upload ng JSON file.';
-          versesArea.innerHTML = '<div>Pakilagay ang rtpv.json sa parehong directory o mag-upload ng file.</div>';
+          versesArea.innerHTML = '<div>Pakilagay ang rtpv.json sa parehong directory o mag-upload ng file.<br><br><input id="fileInput" type="file" accept=".json" /></div>';
+          const fileInput = document.getElementById('fileInput');
+          fileInput.addEventListener('change', (ev) => {
+            const file = ev.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              try {
+                bible = JSON.parse(e.target.result);
+                currentBook = Object.keys(bible)[0];
+                currentChapter = Object.keys(bible[currentBook])[0];
+                renderBooks();
+                renderChapters();
+                renderVerses();
+                alert('Matagumpay na nai-load ang Bible JSON!');
+              } catch (err) {
+                alert('Hindi mabasa ang JSON: ' + err.message);
+              }
+            };
+            reader.readAsText(file);
+          });
         });
     }
-
-    // Load JSON
-    document.getElementById('fileInput').addEventListener('change', (ev) => {
-      const file = ev.target.files[0];
-      if (!file) {
-        alert('Mangyaring pumili ng JSON file.');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadstart = () => {
-        versesArea.innerHTML = '<div>Loading...</div>';
-      };
-      reader.onload = (e) => {
-        try {
-          bible = JSON.parse(e.target.result);
-          currentBook = Object.keys(bible)[0];
-          currentChapter = Object.keys(bible[currentBook])[0];
-          renderBooks();
-          renderChapters();
-          renderVerses();
-          alert('Matagumpay na nai-load ang Bible JSON!');
-        } catch (err) {
-          alert('Hindi mabasa ang JSON: ' + err.message);
-        }
-      };
-      reader.readAsText(file);
-    });
-
-    // Attempt to load default JSON on page load
     window.addEventListener('load', loadDefaultJson);
+
+    // 🌙 Dark mode toggle
+    function initDarkMode() {
+      const saved = localStorage.getItem('darkMode');
+      if (saved !== null) {
+        if (saved === 'true') {
+          document.body.classList.add('dark-mode');
+          darkToggle.textContent = '☀️';
+        }
+      } else {
+        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.body.classList.add('dark-mode');
+          darkToggle.textContent = '☀️';
+        }
+      }
+    }
+    darkToggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      const isDark = document.body.classList.contains('dark-mode');
+      darkToggle.textContent = isDark ? '☀️' : '🌙';
+      localStorage.setItem('darkMode', isDark);
+    });
+    initDarkMode();
   </script>
 </body>
 </html>
